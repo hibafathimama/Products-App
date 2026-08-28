@@ -79,10 +79,6 @@ const [editCategory, setEditCategory] = useState("");
 const [editImage, setEditImage] = useState("");
 const [editDescription, setEditDescription] = useState("");
 
-const [showViewModal, setShowViewModal] = useState(false);
-const [selectedProduct, setSelectedProduct] = useState(null);
-console.log(showViewModal,selectedProduct,displayproduct);
-
 
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [deleteId, setDeleteId] = useState(null);
@@ -192,11 +188,7 @@ const editproduct = (product) => {
     setShowEditModal(true);
 };
 
-const displayproduct=(product)=>{
-    setSelectedProduct(product);
-    setShowViewModal(true);
 
-}
 
 const productPerPage=8;
 const lastProduct=currentPage*productPerPage;
