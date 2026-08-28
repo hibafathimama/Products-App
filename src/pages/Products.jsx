@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import './products.css';
-import watch from "../images/watch.webp"
 import axios from 'axios'
-import { ToastContainer, toast } from 'react-toastify';
+import {  toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../Context/auth';
 
@@ -82,6 +81,8 @@ const [editDescription, setEditDescription] = useState("");
 
 const [showViewModal, setShowViewModal] = useState(false);
 const [selectedProduct, setSelectedProduct] = useState(null);
+console.log(showViewModal,selectedProduct,displayproduct);
+
 
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [deleteId, setDeleteId] = useState(null);

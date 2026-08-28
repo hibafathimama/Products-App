@@ -1,8 +1,6 @@
 import './login.css';
-import Navbar from "../components/Navbar";
 import {useState, useEffect} from 'react';
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
 import { useAuth } from '../Context/auth';
 
 
@@ -30,10 +28,6 @@ const Login = () => {
 
    return(
     <>
-
-    
-
-{/* <ToastContainer/> */}
 
     <div className='login'>
     <div className='login-box'>

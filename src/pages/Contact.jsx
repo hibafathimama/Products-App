@@ -1,18 +1,9 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import './contact.css';
-import { useNavigate } from "react-router-dom";
-import{useEffect} from "react"
-import { useAuth } from "../Context/auth";
+
 
 function Contact() {
-// const navigate=useNavigate();
-// const {user}=useAuth();
-// useEffect(()=>{
-//     if(!user){
-//         navigate("/login")
-//     }
-// })
 
 
     return (

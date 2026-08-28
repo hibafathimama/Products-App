@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import './login.css';
 
 import { useNavigate, useParams } from "react-router-dom";
-import watch from "../images/watch.webp"
 import axios from "axios";
 
 

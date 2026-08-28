@@ -1,10 +1,6 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import './about.css';
-import { useAuth } from '../Context/auth';
-import { useNavigate } from "react-router-dom";
-import {useEffect}from "react";
-import React from "react";
 
 function About() {
 
