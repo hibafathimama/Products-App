@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import './contact.css';
+import '../styles/contact.css';
 
 
 function Contact() {

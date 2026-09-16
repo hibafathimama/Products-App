@@ -1,6 +1,4 @@
 
-
-
 .logo img{
    
   max-width: 150x;
@@ -340,7 +338,10 @@ body {
     justify-content: center;
     gap: 15px;
 }
-
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
 .yes-btn,
 .no-btn {
     padding: 10px 25px;
@@ -421,6 +422,8 @@ background: blue;
     .product-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         background: transparent !important;
+        margin: -25px;
+        padding: 25px;
     }
 }
 

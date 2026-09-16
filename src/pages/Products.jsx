@@ -1,14 +1,31 @@
 import { useEffect, useState } from 'react'
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import './products.css';
-import axios from 'axios'
+import '../styles/products.css';
 import {  toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../Context/auth';
+import api from '../Api';
+import {useForm} from 'react-hook-form';
+import {yupResolver } from '@hookform/resolvers/yup';
+import *as yup from 'yup';
 
-
-
+const schema =yup.object().shape({
+    title:yup.string().required('title is required'),
+    price:yup.number().required('price is required ').positive().typeError('price must be positive value'),
+    cateogary:yup.string().required('cateogary is required'),
+    imageurl:yup.mixed().required("image is required")
+    .test("fileExist","please upload file",(value)=>{
+        return value &&value.length>0;
+    }).test("fileType", "Only jpg, jpeg or png files are allowed", (value) => {
+      return (
+        value &&
+        value.length > 0 &&
+        ["image/jpeg", "image/png", "image/jpg"].includes(value[0]?.type)
+      );
+    }),
+    textarea:yup.string().required("it is required").min(10,"must be 10 letters")
+})
 
 
 function Products() {
@@ -54,24 +71,91 @@ function Products() {
     //             "A fashionable blue dial watch with a premium look, perfect for casual and formal occasions."
     //     }
     // ];
+  const getProducts = async () => {
+    try {
+        const token = localStorage.getItem('token');
+
+        const response = await api.get(
+            '/api/products/listallproduct',
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log("PRODUCTS:", response.data);
+
+        setProducts(response.data.data);
+
+    } catch (error) {
+        console.log("GET PRODUCTS ERROR:", error);
+        console.log("SERVER ERROR:", error.response?.data);
+    }
+};
+    useEffect(() => {
+        getProducts();
+    }, []);
     const navigate = useNavigate();
-//    const viewproduct = () => {
-//         navigate("/viewproduct");
-        
-//     };
-const {user}=useAuth();
+    const {user}=useAuth();
+    const role = user?.role;
+
+        const{
+            register,
+            handleSubmit,
+            formState:{errors}
+        }=useForm({resolver:yupResolver(schema)})
+
+          const [products, setProducts] = useState([]);
+          const [showmodal, setshowmodal] = useState(false);
 
 
-    const [products, setProducts] = useState([])
-    const [showmodal, setshowmodal] = useState(false)
-    // const [addproduct, setaddproduct]=useState([null])
-    const [title, setTitle]=useState("")
-    const [price, setPrice]=useState("")
-    const [cateogary, setCateogary]=useState("")
-    const [imageurl ,setImageurl]=useState("")
-    const [textarea,setTextarea]=useState("")
+        const onSubmit = async (data) => {
+    const token = localStorage.getItem('token');
 
-   const [showEditModal, setShowEditModal] = useState(false);
+    const formData = new FormData();
+
+    formData.append('title', data.title);
+    formData.append('price', data.price);
+    formData.append('cateogary', data.cateogary);
+    formData.append('image', data.imageurl[0]);
+    formData.append('description', data.textarea);
+
+    try {
+        await api.post(
+            '/api/products/addproduct',
+            formData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        alert("Product added successfully");
+
+        setshowmodal(false);
+
+        // Get the newly added products
+        getProducts();
+
+    } catch (error) {
+        console.log("ADD PRODUCT ERROR:", error);
+        console.log("RESPONSE:", error.response?.data);
+
+        alert(
+            error.response?.data?.message ||
+            "Product is not added"
+        );
+    }
+};
+    
+
+
+    // const [products, setProducts] = useState([])
+    // const [showmodal, setshowmodal] = useState(false)
+
+const [showEditModal, setShowEditModal] = useState(false);
 const [editId, setEditId] = useState(null);
 const [editTitle, setEditTitle] = useState("");
 const [editPrice, setEditPrice] = useState("");
@@ -87,47 +171,10 @@ const [currentPage, setCurrentPage] = useState(1);
 
 useEffect(()=>{
     if(!user){
-        navigate("/login");
+        navigate("/products");
     }
 })
-const handlebutton = () => {
-    const product = {
-        title: "",
-        price: Number(price),
-        category: cateogary,
-        image: imageurl,
-        description: textarea
-    };
-    axios.post("https://fakestoreapi.com/products", product)
-        .then(response => {
-          console.log(response)
-            setProducts([...products,response.data])
-            toast.success("Successful");
-
-                setTitle("");
-                setPrice("");
-                setCateogary("");
-                setImageurl("");
-                setTextarea("");
-
-
-
-            setshowmodal(false)
-
-
-            // setProducts(prevProducts => [
-            //     ...prevProducts,
-            //     response.data
-});
-
-         
-};
-
-    useEffect(() => {
-        axios.get('https://fakestoreapi.com/products')
-            .then(response => setProducts(response.data));
-
-    },[])
+       
 
 //    const addedproduct =() =>{
 //    const product = { title: 'New Product', price: 29.99 };
@@ -136,52 +183,88 @@ const handlebutton = () => {
 
 //    };
 
-const deleteproduct =(id)=> {
-   
-    axios.delete(`https://fakestoreapi.com/products/${id}`)
-  .then(response => (
-        setProducts( products.filter((product) => product.id !== response.data.id))
+const deleteproduct = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
 
-  ));
+        console.log("DELETE TOKEN:", token);
+        console.log("DELETE ID:", id);
 
-     toast.success("deleted")
-
-
-}
-
-const updatproduct =(id)=>{
-const updatedproduct = {
-        title: editTitle,
-        price: Number(editPrice),
-        category: editCategory,
-        image: editImage,
-        description: editDescription
-    };
-    axios.put(`https://fakestoreapi.com/products/${id}`,updatedproduct )
-  .then(response => console.log(response.data));
-
-          setProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === id
-                    ? { ...product, ...updatedproduct }
-                    : product
-            )
+        await api.delete(
+            `/api/products/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
         );
-      setShowEditModal(false);
 
-     toast.success("updated")
-    
+        toast.success("Product deleted successfully");
 
+        setShowDeleteModal(false);
+        setDeleteId(null);
+
+        getProducts();
+
+         } catch (error) {
+        console.log("DELETE PRODUCT ERROR:", error);
+        console.log("SERVER ERROR:", error.response?.data);
+
+        toast.error(
+            error.response?.data?.message ||
+            "Delete failed"
+        );
+    }
 };
 
 
+const updatproduct = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const updatedproduct = {
+            title: editTitle,
+            price: Number(editPrice),
+            cateogary: editCategory,
+            description: editDescription
+        };
+
+        const response = await api.put(
+            `/api/products/${id}`,
+            updatedproduct,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        console.log("UPDATED PRODUCT:", response.data);
+
+        toast.success("Product updated successfully");
+
+        setShowEditModal(false);
+
+        getProducts();
+
+    } catch (error) {
+        console.log("UPDATE PRODUCT ERROR:", error);
+        console.log("SERVER ERROR:", error.response?.data);
+
+        toast.error(
+            error.response?.data?.message ||
+            "Update failed"
+        );
+    }
+};
+
 
 const editproduct = (product) => {
-    setEditId(product.id);
+    setEditId(product._id);
 
     setEditTitle(product.title);
     setEditPrice(product.price);
-    setEditCategory(product.category);
+    setEditCategory(product.cateogary);
     setEditImage(product.image);
     setEditDescription(product.description);
 
@@ -190,16 +273,22 @@ const editproduct = (product) => {
 
 
 
-const productPerPage=8;
-const lastProduct=currentPage*productPerPage;
+const productsPerPage = 8;
 
-const firstProduct=lastProduct-productPerPage;
-const currentProduct=products.slice(
-    firstProduct,lastProduct
-    
-)
+const indexOfLastProduct = currentPage * productsPerPage;
 
+const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
 
+const currentProduct = products.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+);
+
+const totalPages = Math.ceil(
+    products.length / productsPerPage
+);
+console.log("PRODUCTS STATE:", products);
+console.log("CURRENT PRODUCTS:", currentProduct);
 
 
     return (
@@ -207,114 +296,236 @@ const currentProduct=products.slice(
         <>
             <Navbar />
             <h1 className="product-head">ALL PRODUCTS</h1>
+            {role === "seller" &&(
             <button className="add-button" onClick={() => setshowmodal(true)}>ADD PRODUCT
             </button>
-
-
-
-
-            {showmodal && (
-
-                <div className="modal-fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div className="modal-dialog">                      
-                 <div className="modal-content">
-                 <div className="modal-header">
-                 <h1 className="modal-title ">ADD PRODUCT</h1>
-                                {/* <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> */}
-                            </div>
-                            <div className="modal-body"  >
-                                 
-                                <div className="mb-3">
-                                    <div className='text'>
-                                    <label for="exampleFormControlInput1" className="form-label">Title</label>
-                                    <input type="email" className="form-control" id="exampleFormControlInput1" 
-                                    value={title}
-                                    onChange={(e)=>setTitle(e.target.value)}/>
-                                </div>
-                                </div>
-
-                                 <div className="mb-3">
-                                    <div className='text'>
-                                    <label for="exampleFormControlInput1" className="form-label">Price</label>
-                                    <input type="email" className="form-control" id="exampleFormControlInput1"
-                                    value={price}
-                                    onChange={(e)=>setPrice(e.target.value)} />
-                                </div>
-                                </div>
-
-                                 <div className="mb-3">
-                                    <div className='text'>
-                                    <label for="exampleFormControlInput1" className="form-label">Cateogary</label>
-                                    <input type="email" className="form-control" id="exampleFormControlInput1"
-                                    value={cateogary}
-                                    onChange={(e)=>setCateogary(e.target.value)} />
-                                </div>
-                                </div>
-                                 <div className="mb-3">
-                                    <div className='text'>
-                                    <label for="exampleFormControlInput1" className="form-label">Image URL</label>
-                                    <input type="email" className="form-control" id="exampleFormControlInput1"
-                                    value={imageurl}
-                                    onChange={(e)=>setImageurl(e.target.value)} />
-                                </div>
-                                </div>
-
-                                <div className="mb-3">
-                                 <div className='text'>
-                                    <label for="exampleFormControlTextarea1" className="form-label">Example textarea</label>
-                                    <textarea className="form-control" id="exampleFormControlTextarea1" rows="3"
-                                    value={textarea}
-                                    onChange={(e)=>setTextarea(e.target.value)}></textarea>
-                                </div>
-                                </div>
-
-
-
-                            </div>
-                            <div className="modal-footer">
-<button
-  type="button"
-  className="btn-btn-secondary"
-  onClick={() => setshowmodal(false)}>
-  Close
-</button>                               
- <button type="button" className="btn-btn-primary" onClick={handlebutton}>ADD Product
-                                    
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             )}
+            
 
-            <div className="product-grid">
-                {currentProduct.map((product,index) => (
-                    <div className="card" key={product.id}>
-                        <h5 className="Women-Watch">{product.title}</h5>
 
-                        <img src={product.image} className="card-img-top" alt="not available" />
-                        <div className="card-body">
-                            <h3 className="price"> ₹{product.price}</h3>
-                            <p className="card-text">{product.description} </p>
-                            {/* <a href="#" class="btn btn-primary">Go somewhere</a> */}
-                            <button className="view"onClick={()=>navigate(`/viewproduct/${product.id}`)} >
-                                View Product</button>
-                            <div className="buttons">
-                                <button className="edit" onClick={()=> editproduct(product)} >Edit</button>
-               <button
-    className="delete"
-    onClick={() => {
-        setDeleteId(product.id);
-        setShowDeleteModal(true);
-    }}
->
-    Delete
-</button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+
+{showmodal && (
+  <div
+    className="modal-fade"
+    id="exampleModal"
+    tabIndex="-1"
+    aria-labelledby="exampleModalLabel"
+    aria-hidden="true"
+  >
+    <div className="modal-dialog">
+      <div className="modal-content">
+
+        <div className="modal-header">
+          <h1 className="modal-title">
+            ADD PRODUCT
+          </h1>
+        </div>
+
+        <div className="modal-body">
+
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            encType="multipart/form-data"
+          >
+
+            {/* Title */}
+            <div className="mb-3">
+              <div className="text">
+                <label htmlFor="title" className="form-label">
+                  Title
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  id="title"
+                  {...register("title")}
+                />
+
+                <p className="error">
+                  {errors.title?.message}
+                </p>
+              </div>
             </div>
+
+
+            {/* Price */}
+            <div className="mb-3">
+              <div className="text">
+                <label htmlFor="price" className="form-label">
+                  Price
+                </label>
+
+                <input
+                  type="number"
+                  className="form-control"
+                  id="price"
+                  {...register("price")}
+                />
+
+                <p className="error">
+                  {errors.price?.message}
+                </p>
+              </div>
+            </div>
+
+
+            {/* Category */}
+            <div className="mb-3">
+              <div className="text">
+                <label htmlFor="cateogary" className="form-label">
+                  Cateogary
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  id="cateogary"
+                  {...register("cateogary")}
+                />
+
+                <p className="error">
+                  {errors.cateogary?.message}
+                </p>
+              </div>
+            </div>
+
+
+            {/* Image */}
+            <div className="mb-3">
+              <div className="text">
+                <label htmlFor="imageurl" className="form-label">
+                  Image
+                </label>
+
+                <input
+                  type="file"
+                  className="form-control"
+                  id="imageurl"
+                  accept="image/jpeg,image/png,image/jpg"
+                  {...register("imageurl")}
+                />
+
+                <p className="error">
+                  {errors.imageurl?.message}
+                </p>
+              </div>
+            </div>
+
+
+            {/* Description */}
+            <div className="mb-3">
+              <div className="text">
+                <label htmlFor="textarea" className="form-label">
+                  Description
+                </label>
+
+                <textarea
+                  className="form-control"
+                  id="textarea"
+                  rows="3"
+                  {...register("textarea")}
+                ></textarea>
+
+                <p className="error">
+                  {errors.textarea?.message}
+                </p>
+              </div>
+            </div>
+
+
+            {/* Footer */}
+            <div className="modal-footer">
+
+              <button
+                type="button"
+                className="btn-btn-secondary"
+                onClick={() => setshowmodal(false)}
+              >
+                Close
+              </button>
+
+              <button
+                type="submit"
+                className="btn-btn-primary"
+              >
+                ADD Product
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
+
+     <div className="product-grid">
+    {currentProduct.map((product) => (
+        <div className="card" key={product._id}>
+
+            <h5 className="Women-Watch">
+                {product.title}
+            </h5>
+
+            <img
+    src={
+        product.image
+            ? `${process.env.REACT_APP_BACKEND_URL}/${product.image.replaceAll("\\", "/")}`
+            : ""
+    }
+    className="card-img-top"
+    alt={product.title}
+/>
+
+            <div className="card-body">
+                <h3 className="price">
+                    ₹{product.price}
+                </h3>
+
+                <p className="card-text">
+                    {product.description}
+                </p>
+
+                <button
+                    className="view"
+                    onClick={() =>
+                        navigate(`/viewproduct/${product._id}`)
+                    }
+                >
+                    View Product
+                </button>
+
+                <div className="buttons">
+                    {role ==="seller" &&
+                    <button
+                        className="edit"
+                        onClick={() => editproduct(product)}
+                    >
+                        Edit
+                    </button>
+                    }
+                    
+                    {role ==="seller" &&
+                     <button
+                            className="delete"
+                            onClick={() => {
+                            setDeleteId(product._id);
+                            setShowDeleteModal(true);
+                        }}
+                    >
+                        Delete
+                    </button>
+                    }
+                   
+                </div>
+            </div>
+        </div>
+    ))}
+</div>
 
 
 <nav aria-label="Page navigation">
@@ -331,41 +542,26 @@ const currentProduct=products.slice(
       </button>
     </li>
 
-    {/* Page 1 */}
-    <li className="page-item">
-      <button
-        className={`page-link ${currentPage === 1 ? "active-button" : ""}`}
-        onClick={() => setCurrentPage(1)}
-      >
-        1
-      </button>
-    </li>
-
-    {/* Page 2 */}
-    <li className="page-item">
-      <button
-        className={`page-link ${currentPage === 2 ? "active-button" : ""}`}
-        onClick={() => setCurrentPage(2)}
-      >
-        2
-      </button>
-    </li>
-
-    {/* Page 3 */}
-    <li className="page-item">
-      <button
-        className={`page-link ${currentPage === 3 ? "active-button" : ""}`}
-        onClick={() => setCurrentPage(3)}
-      >
-        3
-      </button>
-    </li>
+    {/* Page numbers */}
+    {Array.from({ length: totalPages }, (_, index) => (
+      <li className="page-item" key={index + 1}>
+        <button
+          className={`page-link ${
+            currentPage === index + 1 ? "active-button" : ""
+          }`}
+          onClick={() => setCurrentPage(index + 1)}
+        >
+          {index + 1}
+        </button>
+      </li>
+    ))}
 
     {/* Next */}
     <li className="page-item">
       <button
         className="page-link"
         onClick={() => setCurrentPage(currentPage + 1)}
+        disabled={currentPage === totalPages}
       >
         &raquo;
       </button>

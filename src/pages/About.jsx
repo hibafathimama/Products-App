@@ -1,7 +1,6 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import './about.css';
-
+import '../styles/about.css'
 function About() {
 
     // const navigate = useNavigate();

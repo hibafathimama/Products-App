@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
-
-import './login.css';
-
+import '../styles/login.css'
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import api from '../Api'
 
 
 
@@ -13,16 +11,33 @@ function Viewproduct(){
     const {id} = useParams()
   
     const product = () => {
-        navigate("/");
+        navigate("/products");
         
     };
-const [viewproduct,setViewproduct]=useState("")
+const [viewproduct, setViewproduct] = useState({});
+useEffect(() => {
+ const getoneproduct = async()=>{
+    try{
+        const token = localStorage.getItem("token");
+        const response = await api.get(`/api/products/${id}`,
+            {
+                headers: {
+                        Authorization: `Bearer ${token}`
+                    }
 
-useEffect(()=>{
-    axios.get(`https://fakestoreapi.com/products/${id}`)
-  .then(response => setViewproduct(response.data));
-},[id]);
-
+            }
+        );
+        console.log("VIEW PRODUCT:", response.data);
+        console.log("IMAGE:", response.data.data.image);
+        setViewproduct(response.data.data);
+  
+    }catch (error) {
+            console.log("VIEW PRODUCT ERROR:", error);
+            console.log("SERVER ERROR:", error.response?.data);
+        }
+   };
+   getoneproduct()
+}, [id]);
 
 
 
@@ -31,10 +46,14 @@ useEffect(()=>{
 <div className='viewproduct'>
 <div className="view1" style={{ width: "100%" }}>
     <div className='image-section1'>  
-              <img
-        src={viewproduct.image}
-        alt={viewproduct.title}
-      />
+           <img
+    src={
+        viewproduct.image
+            ? `http://localhost:5000/${viewproduct.image.replaceAll("\\", "/")}`
+            : ""
+    }
+    alt={viewproduct.title}
+/>
 
 </div>
   <div className="card-body1">
