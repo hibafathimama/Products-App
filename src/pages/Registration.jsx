@@ -54,7 +54,7 @@ const registrationSchema = yup.object({
             // Add image file
              formData.append("image", data.image[0]);
              // send to backend
-             const res = await api.post('/api/users/register',formData);
+              await api.post('/api/users/register',formData);
 
              alert('registration successfull')
              navigate('/'); 

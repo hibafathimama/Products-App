@@ -1,7 +1,6 @@
 import '../styles/profile.css';
 import { useEffect } from "react";
 import api from '../Api';
-import {  useNavigate } from "react-router-dom";
 import {useForm} from 'react-hook-form';
 import {yupResolver } from '@hookform/resolvers/yup';
 import *as yup from 'yup';
@@ -94,6 +93,7 @@ return (
           type="text"
           {...register("firstName")}
         />
+        <p>{errors.firstName?.message}</p>
 
         {/* Last Name */}
         <label>Last Name</label>
@@ -101,6 +101,7 @@ return (
           type="text"
           {...register("lastName")}
         />
+         <p>{errors.lastName?.message}</p>
 
         {/* Email */}
         <label>Email</label>
@@ -108,6 +109,7 @@ return (
           type="email"
           {...register("email")}
         />
+         <p>{errors.email?.message}</p>
 
         <button type="submit">
           Update Profile
