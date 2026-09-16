@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import {useCallback, useEffect, useState } from 'react'
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import '../styles/products.css';
@@ -86,7 +86,7 @@ function Products() {
     const totalPages = Math.ceil(total / limit);
 
     
-const getProducts = async () => {
+const getProducts = useCallback( async () => {
     try {
         const token = localStorage.getItem('token');
 
@@ -108,10 +108,10 @@ const getProducts = async () => {
         console.log("GET PRODUCTS ERROR:", error);
         console.log("SERVER ERROR:", error.response?.data);
     }
-};
+}, [skip]);
     useEffect(() => {
     getProducts();
-    }, [currentPage]);
+}, [getProducts]);
     const navigate = useNavigate();
     const {user}=useAuth();
     const role = user?.role;
