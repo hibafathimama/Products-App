@@ -71,12 +71,27 @@ function Products() {
     //             "A fashionable blue dial watch with a premium look, perfect for casual and formal occasions."
     //     }
     // ];
-  const getProducts = async () => {
+  
+
+    const [products, setProducts] = useState([]);
+    const [showmodal, setshowmodal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [total, setTotal] = useState(0);
+
+    const limit = 8;
+    const skip = (currentPage - 1) * limit;
+    const totalPages = Math.ceil(total / limit);
+
+    
+const getProducts = async () => {
     try {
         const token = localStorage.getItem('token');
 
         const response = await api.get(
-            '/api/products/listallproduct',
+            `/api/products/listallproduct?limit=${limit}&skip=${skip}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -87,6 +102,7 @@ function Products() {
         console.log("PRODUCTS:", response.data);
 
         setProducts(response.data.data);
+        setTotal(response.data.total);
 
     } catch (error) {
         console.log("GET PRODUCTS ERROR:", error);
@@ -94,8 +110,8 @@ function Products() {
     }
 };
     useEffect(() => {
-        getProducts();
-    }, []);
+    getProducts();
+    }, [currentPage]);
     const navigate = useNavigate();
     const {user}=useAuth();
     const role = user?.role;
@@ -105,10 +121,6 @@ function Products() {
             handleSubmit,
             formState:{errors}
         }=useForm({resolver:yupResolver(schema)})
-
-          const [products, setProducts] = useState([]);
-          const [showmodal, setshowmodal] = useState(false);
-
 
         const onSubmit = async (data) => {
     const token = localStorage.getItem('token');
@@ -155,18 +167,15 @@ function Products() {
     // const [products, setProducts] = useState([])
     // const [showmodal, setshowmodal] = useState(false)
 
-const [showEditModal, setShowEditModal] = useState(false);
 const [editId, setEditId] = useState(null);
 const [editTitle, setEditTitle] = useState("");
 const [editPrice, setEditPrice] = useState("");
 const [editCategory, setEditCategory] = useState("");
 const [editImage, setEditImage] = useState("");
 const [editDescription, setEditDescription] = useState("");
-
-
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [deleteId, setDeleteId] = useState(null);
-const [currentPage, setCurrentPage] = useState(1);
+
 
 
 useEffect(()=>{
@@ -273,22 +282,6 @@ const editproduct = (product) => {
 
 
 
-const productsPerPage = 8;
-
-const indexOfLastProduct = currentPage * productsPerPage;
-
-const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-
-const currentProduct = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-);
-
-const totalPages = Math.ceil(
-    products.length / productsPerPage
-);
-console.log("PRODUCTS STATE:", products);
-console.log("CURRENT PRODUCTS:", currentProduct);
 
 
     return (
@@ -464,7 +457,7 @@ console.log("CURRENT PRODUCTS:", currentProduct);
 )}
 
      <div className="product-grid">
-    {currentProduct.map((product) => (
+    {products.map((product) => (
         <div className="card" key={product._id}>
 
             <h5 className="Women-Watch">
@@ -527,48 +520,32 @@ console.log("CURRENT PRODUCTS:", currentProduct);
     ))}
 </div>
 
+{/* Pagination */}
+<div className="pagination pb-5">
 
-<nav aria-label="Page navigation">
-  <ul className="pagination my-pagination">
-
-    {/* Previous */}
-    <li className="page-item">
-      <button
-        className="page-link"
-        onClick={() => setCurrentPage(currentPage - 1)}
+    <button
+        className="btn me-2"
         disabled={currentPage === 1}
-      >
-        &laquo;
-      </button>
-    </li>
+        onClick={() => setCurrentPage(prev => prev - 1)}
+    >
+        Prev
+    </button>
 
-    {/* Page numbers */}
-    {Array.from({ length: totalPages }, (_, index) => (
-      <li className="page-item" key={index + 1}>
-        <button
-          className={`page-link ${
-            currentPage === index + 1 ? "active-button" : ""
-          }`}
-          onClick={() => setCurrentPage(index + 1)}
-        >
-          {index + 1}
-        </button>
-      </li>
-    ))}
+    <span>
+        <strong>
+            Page {currentPage} of {totalPages}
+        </strong>
+    </span>
 
-    {/* Next */}
-    <li className="page-item">
-      <button
-        className="page-link"
-        onClick={() => setCurrentPage(currentPage + 1)}
+    <button
+        className="btn ms-2"
         disabled={currentPage === totalPages}
-      >
-        &raquo;
-      </button>
-    </li>
+        onClick={() => setCurrentPage(prev => prev + 1)}
+    >
+        Next
+    </button>
 
-  </ul>
-</nav>
+</div>
 
 
             <Footer />
@@ -691,7 +668,7 @@ console.log("CURRENT PRODUCTS:", currentProduct);
         </div>
 
     </div>
-)}
+            )}
 
 {/* 
 {showViewModal && selectedProduct && (
@@ -783,4 +760,5 @@ console.log("CURRENT PRODUCTS:", currentProduct);
         </>
     )
 }
+
 export default Products;

@@ -47,7 +47,7 @@ console.log(user)
             if (user) {
                 logout();
             } else {
-                navigate("/Login");
+                navigate("/");
             }
         }}
     >
