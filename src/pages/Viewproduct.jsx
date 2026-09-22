@@ -46,10 +46,10 @@ useEffect(() => {
 <div className='viewproduct'>
 <div className="view1" style={{ width: "100%" }}>
     <div className='image-section1'>  
-           <img
+       <img
     src={
         viewproduct.image
-            ? `http://localhost:5000/${viewproduct.image.replaceAll("\\", "/")}`
+            ? `${process.env.REACT_APP_BACKEND_URL}/${viewproduct.image.replaceAll("\\", "/")}`
             : ""
     }
     alt={viewproduct.title}

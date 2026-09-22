@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
 
+    
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -29,14 +31,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+    setUser(null);
 
-        setUser(null);
-
-        toast.info("Logged out successfully!");
-    };
+    toast.info("Logged out successfully");
+};
 
     return (
         <>

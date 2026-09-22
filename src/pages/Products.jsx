@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState } from 'react'
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Footer from "../components/Footer.jsx";
 import '../styles/products.css';
 import {  toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
@@ -10,23 +10,58 @@ import {useForm} from 'react-hook-form';
 import {yupResolver } from '@hookform/resolvers/yup';
 import *as yup from 'yup';
 
-const schema =yup.object().shape({
-    title:yup.string().required('title is required'),
-    price:yup.number().required('price is required ').positive().typeError('price must be positive value'),
-    cateogary:yup.string().required('cateogary is required'),
-    imageurl:yup.mixed().required("image is required")
-    .test("fileExist","please upload file",(value)=>{
-        return value &&value.length>0;
-    }).test("fileType", "Only jpg, jpeg or png files are allowed", (value) => {
-      return (
-        value &&
-        value.length > 0 &&
-        ["image/jpeg", "image/png", "image/jpg"].includes(value[0]?.type)
-      );
-    }),
-    textarea:yup.string().required("it is required").min(10,"must be 10 letters")
-})
+const schema = yup.object().shape({
+    title: yup.string().required("title is required"),
 
+    price: yup
+        .number()
+        .required("price is required")
+        .positive("price must be positive value")
+        .typeError("price must be a number"),
+
+    cateogary: yup.string().required("cateogary is required"),
+
+    imageurl: yup
+        .mixed()
+        .required("image is required")
+        .test("fileExist", "please upload file", (value) => {
+            return value && value.length > 0;
+        })
+        .test("fileType", "Only jpg, jpeg or png files are allowed", (value) => {
+            return (
+                value &&
+                value.length > 0 &&
+                ["image/jpeg", "image/png", "image/jpg"].includes(value[0]?.type)
+            );
+        }),
+
+    textarea: yup
+        .string()
+        .required("it is required")
+        .min(10, "must be 10 letters")
+});
+
+const editProductSchema = yup.object().shape({
+    title: yup
+        .string()
+        .required("Title is required")
+        .matches(/^[A-Za-z ]+$/, "Title must contain only letters"),
+
+    price: yup
+        .number()
+        .typeError("Price must be a number")
+        .required("Price is required")
+        .positive("Price must be a positive value"),
+
+    cateogary: yup
+        .string()
+        .required("Category is required"),
+
+    description: yup
+        .string()
+        .required("Description is required")
+        .min(10, "Description must be at least 10 characters"),
+});
 
 function Products() {
     // const products = [
@@ -122,6 +157,16 @@ const getProducts = useCallback( async () => {
             formState:{errors}
         }=useForm({resolver:yupResolver(schema)})
 
+        // Edit Product form
+        const {
+            register: registerEdit,
+            handleSubmit: handleEditSubmit,
+            reset: resetEdit,
+            formState: { errors: editErrors }
+        } = useForm({
+            resolver: yupResolver(editProductSchema)
+        });
+
         const onSubmit = async (data) => {
     const token = localStorage.getItem('token');
 
@@ -167,14 +212,11 @@ const getProducts = useCallback( async () => {
     // const [products, setProducts] = useState([])
     // const [showmodal, setshowmodal] = useState(false)
 
+
 const [editId, setEditId] = useState(null);
-const [editTitle, setEditTitle] = useState("");
-const [editPrice, setEditPrice] = useState("");
-const [editCategory, setEditCategory] = useState("");
-const [editImage, setEditImage] = useState("");
-const [editDescription, setEditDescription] = useState("");
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [deleteId, setDeleteId] = useState(null);
+
 
 
 
@@ -227,20 +269,25 @@ const deleteproduct = async (id) => {
 };
 
 
-const updatproduct = async (id) => {
+const updatproduct = async (id, data) => {
     try {
         const token = localStorage.getItem("token");
 
-        const updatedproduct = {
-            title: editTitle,
-            price: Number(editPrice),
-            cateogary: editCategory,
-            description: editDescription
-        };
+        const formData = new FormData();
+
+        formData.append("title", data.title);
+        formData.append("price", data.price);
+        formData.append("cateogary", data.cateogary);
+        formData.append("description", data.description);
+
+        // Add image only if user selected a new image
+        if (data.imageurl && data.imageurl.length > 0) {
+            formData.append("image", data.imageurl[0]);
+        }
 
         const response = await api.put(
             `/api/products/${id}`,
-            updatedproduct,
+            formData,
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -271,11 +318,12 @@ const updatproduct = async (id) => {
 const editproduct = (product) => {
     setEditId(product._id);
 
-    setEditTitle(product.title);
-    setEditPrice(product.price);
-    setEditCategory(product.cateogary);
-    setEditImage(product.image);
-    setEditDescription(product.description);
+    resetEdit({
+        title: product.title,
+        price: product.price,
+        cateogary: product.cateogary,
+        description: product.description
+    });
 
     setShowEditModal(true);
 };
@@ -284,274 +332,325 @@ const editproduct = (product) => {
 
 
 
-    return (
+return (
+    <div className="products-page">
 
-        <>
-            <Navbar />
-            <h1 className="product-head">ALL PRODUCTS</h1>
-            {role === "seller" &&(
-            <button className="add-button" onClick={() => setshowmodal(true)}>ADD PRODUCT
+        <Navbar />
+
+        <h1 className="product-head">ALL PRODUCTS</h1>
+
+        {role === "seller" && (
+            <button
+                className="add-button"
+                onClick={() => setshowmodal(true)}
+            >
+                ADD PRODUCT
             </button>
-            )}
-            
+        )}
 
+        {/* ADD PRODUCT MODAL */}
+        {showmodal && (
+            <div
+                className="modal-fade"
+                id="exampleModal"
+                tabIndex="-1"
+                aria-labelledby="exampleModalLabel"
+                aria-hidden="true"
+            >
+                <div className="modal-dialog">
+                    <div className="modal-content">
 
+                        <div className="modal-header">
+                            <h1 className="modal-title">
+                                ADD PRODUCT
+                            </h1>
+                        </div>
 
-{showmodal && (
-  <div
-    className="modal-fade"
-    id="exampleModal"
-    tabIndex="-1"
-    aria-labelledby="exampleModalLabel"
-    aria-hidden="true"
-  >
-    <div className="modal-dialog">
-      <div className="modal-content">
+                        <div className="modal-body">
 
-        <div className="modal-header">
-          <h1 className="modal-title">
-            ADD PRODUCT
-          </h1>
-        </div>
+                            <form
+                                onSubmit={handleSubmit(onSubmit)}
+                                encType="multipart/form-data"
+                            >
 
-        <div className="modal-body">
+                                {/* Title */}
+                                <div className="mb-3">
+                                    <div className="text">
+                                        <label
+                                            htmlFor="title"
+                                            className="form-label"
+                                        >
+                                            Title
+                                        </label>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            encType="multipart/form-data"
-          >
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="title"
+                                            {...register("title")}
+                                        />
 
-            {/* Title */}
-            <div className="mb-3">
-              <div className="text">
-                <label htmlFor="title" className="form-label">
-                  Title
-                </label>
+                                        <p className="error">
+                                            {errors.title?.message}
+                                        </p>
+                                    </div>
+                                </div>
 
-                <input
-                  type="text"
-                  className="form-control"
-                  id="title"
-                  {...register("title")}
-                />
+                                {/* Price */}
+                                <div className="mb-3">
+                                    <div className="text">
+                                        <label
+                                            htmlFor="price"
+                                            className="form-label"
+                                        >
+                                            Price
+                                        </label>
 
-                <p className="error">
-                  {errors.title?.message}
-                </p>
-              </div>
-            </div>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            id="price"
+                                            {...register("price")}
+                                        />
 
+                                        <p className="error">
+                                            {errors.price?.message}
+                                        </p>
+                                    </div>
+                                </div>
 
-            {/* Price */}
-            <div className="mb-3">
-              <div className="text">
-                <label htmlFor="price" className="form-label">
-                  Price
-                </label>
+                                {/* Category */}
+                                <div className="mb-3">
+                                    <div className="text">
+                                        <label
+                                            htmlFor="cateogary"
+                                            className="form-label"
+                                        >
+                                            Cateogary
+                                        </label>
 
-                <input
-                  type="number"
-                  className="form-control"
-                  id="price"
-                  {...register("price")}
-                />
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="cateogary"
+                                            {...register("cateogary")}
+                                        />
 
-                <p className="error">
-                  {errors.price?.message}
-                </p>
-              </div>
-            </div>
+                                        <p className="error">
+                                            {errors.cateogary?.message}
+                                        </p>
+                                    </div>
+                                </div>
 
+                                {/* Image */}
+                                <div className="mb-3">
+                                    <div className="text">
+                                        <label
+                                            htmlFor="imageurl"
+                                            className="form-label"
+                                        >
+                                            Image
+                                        </label>
 
-            {/* Category */}
-            <div className="mb-3">
-              <div className="text">
-                <label htmlFor="cateogary" className="form-label">
-                  Cateogary
-                </label>
+                                        <input
+                                            type="file"
+                                            className="form-control"
+                                            id="imageurl"
+                                            accept="image/jpeg,image/png,image/jpg"
+                                            {...register("imageurl")}
+                                        />
 
-                <input
-                  type="text"
-                  className="form-control"
-                  id="cateogary"
-                  {...register("cateogary")}
-                />
+                                        <p className="error">
+                                            {errors.imageurl?.message}
+                                        </p>
+                                    </div>
+                                </div>
 
-                <p className="error">
-                  {errors.cateogary?.message}
-                </p>
-              </div>
-            </div>
+                                {/* Description */}
+                                <div className="mb-3">
+                                    <div className="text">
+                                        <label
+                                            htmlFor="textarea"
+                                            className="form-label"
+                                        >
+                                            Description
+                                        </label>
 
+                                        <textarea
+                                            className="form-control"
+                                            id="textarea"
+                                            rows="3"
+                                            {...register("textarea")}
+                                        ></textarea>
 
-            {/* Image */}
-            <div className="mb-3">
-              <div className="text">
-                <label htmlFor="imageurl" className="form-label">
-                  Image
-                </label>
+                                        <p className="error">
+                                            {errors.textarea?.message}
+                                        </p>
+                                    </div>
+                                </div>
 
-                <input
-                  type="file"
-                  className="form-control"
-                  id="imageurl"
-                  accept="image/jpeg,image/png,image/jpg"
-                  {...register("imageurl")}
-                />
+                                {/* Modal Footer */}
+                                <div className="modal-footer">
 
-                <p className="error">
-                  {errors.imageurl?.message}
-                </p>
-              </div>
-            </div>
+                                    <button
+                                        type="button"
+                                        className="btn-btn-secondary"
+                                        onClick={() => setshowmodal(false)}
+                                    >
+                                        Close
+                                    </button>
 
+                                    <button
+                                        type="submit"
+                                        className="btn-btn-primary"
+                                    >
+                                        ADD Product
+                                    </button>
 
-            {/* Description */}
-            <div className="mb-3">
-              <div className="text">
-                <label htmlFor="textarea" className="form-label">
-                  Description
-                </label>
+                                </div>
 
-                <textarea
-                  className="form-control"
-                  id="textarea"
-                  rows="3"
-                  {...register("textarea")}
-                ></textarea>
+                            </form>
 
-                <p className="error">
-                  {errors.textarea?.message}
-                </p>
-              </div>
-            </div>
+                        </div>
 
-
-            {/* Footer */}
-            <div className="modal-footer">
-
-              <button
-                type="button"
-                className="btn-btn-secondary"
-                onClick={() => setshowmodal(false)}
-              >
-                Close
-              </button>
-
-              <button
-                type="submit"
-                className="btn-btn-primary"
-              >
-                ADD Product
-              </button>
-
-            </div>
-
-          </form>
-
-        </div>
-
-      </div>
-    </div>
-  </div>
-)}
-
-     <div className="product-grid">
-    {products.map((product) => (
-        <div className="card" key={product._id}>
-
-            <h5 className="Women-Watch">
-                {product.title}
-            </h5>
-
-            <img
-    src={
-        product.image
-            ? `${process.env.REACT_APP_BACKEND_URL}/${product.image.replaceAll("\\", "/")}`
-            : ""
-    }
-    className="card-img-top"
-    alt={product.title}
-/>
-
-            <div className="card-body">
-                <h3 className="price">
-                    ₹{product.price}
-                </h3>
-
-                <p className="card-text">
-                    {product.description}
-                </p>
-
-                <button
-                    className="view"
-                    onClick={() =>
-                        navigate(`/viewproduct/${product._id}`)
-                    }
-                >
-                    View Product
-                </button>
-
-                <div className="buttons">
-                    {role ==="seller" &&
-                    <button
-                        className="edit"
-                        onClick={() => editproduct(product)}
-                    >
-                        Edit
-                    </button>
-                    }
-                    
-                    {role ==="seller" &&
-                     <button
-                            className="delete"
-                            onClick={() => {
-                            setDeleteId(product._id);
-                            setShowDeleteModal(true);
-                        }}
-                    >
-                        Delete
-                    </button>
-                    }
-                   
+                    </div>
                 </div>
             </div>
+        )}
+
+        {/* PRODUCT AREA */}
+        <div className="product-area">
+
+            <div className="product-grid">
+
+                {products.length > 0 ? (
+
+                    products.map((product) => (
+                        <div
+                            className="card"
+                            key={product._id}
+                        >
+
+                            <h5 className="Women-Watch">
+                                {product.title}
+                            </h5>
+
+                            <img
+                                src={
+                                    product.image
+                                        ? `${process.env.REACT_APP_BACKEND_URL}/${product.image.replaceAll("\\", "/")}`
+                                        : ""
+                                }
+                                className="card-img-top"
+                                alt={product.title}
+                            />
+
+                            <div className="card-body">
+
+                                <h3 className="price">
+                                    ₹{product.price}
+                                </h3>
+
+                                <p className="card-text">
+                                    {product.description}
+                                </p>
+
+                                <button
+                                    className="view"
+                                    onClick={() =>
+                                        navigate(`/viewproduct/${product._id}`)
+                                    }
+                                >
+                                    View Product
+                                </button>
+
+                                <div className="buttons">
+
+                                    {/* EDIT - SELLER ONLY */}
+                                    {role === "seller" && (
+                                        <button
+                                            className="edit"
+                                            onClick={() =>
+                                                editproduct(product)
+                                            }
+                                        >
+                                            Edit
+                                        </button>
+                                    )}
+
+                                    {/* DELETE - SELLER ONLY */}
+                                    {role === "seller" && (
+                                        <button
+                                            className="delete"
+                                            onClick={() => {
+                                                setDeleteId(product._id);
+                                                setShowDeleteModal(true);
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    ))
+
+                ) : (
+
+                    /* NO PRODUCTS */
+                    <div className="no-products">
+                        <h3>No products available</h3>
+                    </div>
+
+                )}
+
+            </div>
+
         </div>
-    ))}
-</div>
-
-{/* Pagination */}
-<div className="pagination pb-5">
-
-    <button
-        className="btn me-2"
-        disabled={currentPage === 1}
-        onClick={() => setCurrentPage(prev => prev - 1)}
-    >
-        Prev
-    </button>
-
-    <span>
-        <strong>
-            Page {currentPage} of {totalPages}
-        </strong>
-    </span>
-
-    <button
-        className="btn ms-2"
-        disabled={currentPage === totalPages}
-        onClick={() => setCurrentPage(prev => prev + 1)}
-    >
-        Next
-    </button>
-
-</div>
 
 
-            <Footer />
+        {/* PAGINATION */}
+        {products.length > 0 && (
+            <div className="pagination pb-5">
+
+                <button
+                    className="btn me-2"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                        setCurrentPage(prev => prev - 1)
+                    }
+                >
+                    Prev
+                </button>
+
+                <span>
+                    <strong>
+                        Page {currentPage} of {totalPages}
+                    </strong>
+                </span>
+
+                <button
+                    className="btn ms-2"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                        setCurrentPage(prev => prev + 1)
+                    }
+                >
+                    Next
+                </button>
+
+            </div>
+        )}
 
 
-            {showEditModal && (
+        {/* FOOTER */}
+        <Footer />
+
+
+       {showEditModal && (
     <div className="modal-fade">
 
         <div className="modal-dialog">
@@ -564,191 +663,129 @@ const editproduct = (product) => {
                     </h1>
                 </div>
 
-                <div className="modal-body">
-
-                    <div className="mb-3">
-                        <label className="form-label">
-                            Title
-                        </label>
-
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={editTitle}
-                            onChange={(e) =>
-                                setEditTitle(e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">
-                            Price
-                        </label>
-
-                        <input
-                            type="number"
-                            className="form-control"
-                            value={editPrice}
-                            onChange={(e) =>
-                                setEditPrice(e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">
-                            Category
-                        </label>
-
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={editCategory}
-                            onChange={(e) =>
-                                setEditCategory(e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">
-                            Image URL
-                        </label>
-
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={editImage}
-                            onChange={(e) =>
-                                setEditImage(e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">
-                            Description
-                        </label>
-
-                        <textarea
-                            className="form-control"
-                            rows="3"
-                            value={editDescription}
-                            onChange={(e) =>
-                                setEditDescription(e.target.value)
-                            }
-                        />
-                    </div>
-
-                </div>
-
-                <div className="modal-footer">
-
-                    <button
-                        type="button"
-                        className="btn-btn-secondary"
-                        onClick={() => setShowEditModal(false)}
-                    >
-                        CLOSE
-                    </button>
-
-                    <button
-                        type="button"
-                        className="btn-btn-primary"
-                onClick={() => updatproduct(editId)}
-                    >
-                        UPDATE PRODUCT
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-            )}
-
-{/* 
-{showViewModal && selectedProduct && (
-    <div className="modal-fade">
-
-        <div className="modal-dialog">
-
-            <div className="modal-content">
-
-                <div className="modal-header">
-                    <h1>PRODUCT DETAILS</h1>
-                </div>
-
-                <div className="modal-body">
-
-                    <img
-                        src={selectedProduct.image}
-                        alt={selectedProduct.title}
-                        style={{ width: "200px" }}
-                    />
-
-                    <h3>{selectedProduct.title}</h3>
-
-                    <h4>₹{selectedProduct.price}</h4>
-
-                    <p>
-                        <strong>Category:</strong>{" "}
-                        {selectedProduct.category}
-                    </p>
-
-                    <p>
-                        {selectedProduct.description}
-                    </p>
-
-                </div>
-
-                <div className="modal-footer">
-
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => setShowViewModal(false)}
-                    >
-                        Close
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-)} */}
-{showDeleteModal && (
-    <div className="delete-modal-overlay">
-
-        <div className="delete-modal">
-
-            <h3>Are you sure?</h3>
-
-            <p>Are you sure you want to delete this product?</p>
-
-            <div className="modal-buttons">
-
-                <button
-                    className="no-btn"
-                    onClick={() => setShowDeleteModal(false)}
+                {/* FORM START */}
+                <form
+                    onSubmit={handleEditSubmit((data) =>
+                        updatproduct(editId, data)
+                    )}
                 >
-                    No
-                </button>
 
-                <button
-                    className="yes-btn"
-                    onClick={() => {
-                        deleteproduct(deleteId);
-                        setShowDeleteModal(false);
-                    }}
-                >
-                    Yes
-                </button>
+                    <div className="modal-body">
+
+                        {/* Title */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Title
+                            </label>
+
+                            <input
+                                type="text"
+                                className="form-control"
+                                {...registerEdit("title")}
+                            />
+
+                            {editErrors.title && (
+                                <p className="edit-error">
+                                    {editErrors.title.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Price */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Price
+                            </label>
+
+                            <input
+                                type="number"
+                                className="form-control"
+                                {...registerEdit("price")}
+                            />
+
+                            {editErrors.price && (
+                                <p className="edit-error">
+                                    {editErrors.price.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Category */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Category
+                            </label>
+
+                            <input
+                                type="text"
+                                className="form-control"
+                                {...registerEdit("cateogary")}
+                            />
+
+                            {editErrors.cateogary && (
+                                <p className="edit-error">
+                                    {editErrors.cateogary.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Image */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Change Image
+                            </label>
+
+                            <input
+                                type="file"
+                                className="form-control"
+                                accept="image/jpeg,image/jpg,image/png"
+                                {...registerEdit("imageurl")}
+                            />
+                        </div>
+
+                        {/* Description */}
+                        <div className="mb-3">
+                            <label className="form-label">
+                                Description
+                            </label>
+
+                            <textarea
+                                className="form-control"
+                                rows="3"
+                                {...registerEdit("description")}
+                            />
+
+                            {editErrors.description && (
+                                <p className="edit-error">
+                                    {editErrors.description.message}
+                                </p>
+                            )}
+                        </div>
+
+                    </div>
+
+                    {/* FOOTER */}
+                    <div className="modal-footer">
+
+                        <button
+                            type="button"
+                            className="btn-btn-secondary"
+                            onClick={() => setShowEditModal(false)}
+                        >
+                            CLOSE
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="btn-btn-primary"
+                        >
+                            UPDATE PRODUCT
+                        </button>
+
+                    </div>
+
+                </form>
+                {/* FORM END */}
 
             </div>
 
@@ -757,8 +794,53 @@ const editproduct = (product) => {
     </div>
 )}
 
-        </>
-    )
+
+        {/* DELETE PRODUCT MODAL */}
+        {showDeleteModal && (
+            <div className="delete-modal-overlay">
+
+                <div className="delete-modal">
+
+                    <h3>
+                        Are you sure?
+                    </h3>
+
+                    <p>
+                        Are you sure you want to delete this product?
+                    </p>
+
+                    <div className="modal-buttons">
+
+                        <button
+                            className="no-btn"
+                            onClick={() =>
+                                setShowDeleteModal(false)
+                            }
+                        >
+                            No
+                        </button>
+
+                        <button
+                            className="yes-btn"
+                            onClick={() => {
+                                deleteproduct(deleteId);
+                                setShowDeleteModal(false);
+                            }}
+                        >
+                            Yes
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        )}
+
+    </div>
+);
+
 }
 
 export default Products;
+

@@ -12,7 +12,7 @@ const viewabout=()=>{
 }
 
 const viewhome=()=>{
-    navigate("/")
+    navigate("/products")
 }
 const viewcontact=()=>{
     navigate("/contact")
@@ -41,18 +41,15 @@ console.log(user)
             </Link>
             </li>
           <li>
-    <button
-        className='logout'
-        onClick={() => {
-            if (user) {
+                <button
+            className="logout"
+            onClick={() => {
                 logout();
-            } else {
                 navigate("/");
-            }
-        }}
-    >
-        {user ? "LOGOUT" : "LOGIN"}
-    </button>
+            }}
+        >
+            LOGOUT
+        </button>
 </li>
 
          </ul>

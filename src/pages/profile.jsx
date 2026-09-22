@@ -8,18 +8,23 @@ import *as yup from 'yup';
 const profileSchema = yup.object({
   firstName: yup
     .string()
-    .required("First name is required"),
+    .required("First name is required")
+    .matches(/^[A-Za-z]+$/, "First name must contain only letters"),
 
   lastName: yup
     .string()
-    .required("Last name is required"),
+    .required("Last name is required")
+    .matches(/^[A-Za-z]+$/, "Last name must contain only letters"),
 
   email: yup
     .string()
-    .email("Enter a valid email")
-    .required("Email is required"),
-
+    .required("Email is required")
+    .matches(
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      "Please enter a valid email address"
+    ),
 });
+
    const ProfilePage  =()=>{
         //validation
        const{ register,
@@ -93,7 +98,7 @@ return (
           type="text"
           {...register("firstName")}
         />
-        <p>{errors.firstName?.message}</p>
+        <p className="error-message">{errors.firstName?.message}</p>
 
         {/* Last Name */}
         <label>Last Name</label>
@@ -101,7 +106,7 @@ return (
           type="text"
           {...register("lastName")}
         />
-         <p>{errors.lastName?.message}</p>
+         <p className="error-message">{errors.lastName?.message}</p>
 
         {/* Email */}
         <label>Email</label>
@@ -109,7 +114,7 @@ return (
           type="email"
           {...register("email")}
         />
-         <p>{errors.email?.message}</p>
+         <p className="error-message">{errors.email?.message}</p>
 
         <button type="submit">
           Update Profile

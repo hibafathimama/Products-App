@@ -15,10 +15,13 @@ const registrationSchema = yup.object({
     .string()
     .required("Last name is required"),
 
-  email: yup
-    .string()
-    .email("Enter a valid email")
-    .required("Email is required"),
+    email: yup
+        .string()
+        .required("Email is required")
+        .matches(
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            "Please enter a valid email address"
+        ),
 
   password: yup
     .string()
@@ -76,8 +79,7 @@ return (
 
       <h2>Create Account</h2>
 
-      <form onSubmit={handleSubmit(onsubmit)}>
-
+    <form noValidate onSubmit={handleSubmit(onsubmit)}>
         {/* First Name */}
         <div className="form-group">
           <label>First Name</label>
@@ -105,7 +107,11 @@ return (
             type="email"
             {...register("email")}
           />
-          <p>{errors.email?.message}</p>
+        {errors.email && (
+        <p className="text-red-500">
+          {errors.email.message}
+        </p>
+      )}
         </div>
 
         {/* Password */}

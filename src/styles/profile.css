@@ -84,6 +84,12 @@
 .profile-card button:active {
   transform: scale(0.98);
 }
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
 
 /* Mobile responsive */
 @media (max-width: 500px) {
