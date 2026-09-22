@@ -11,34 +11,52 @@ import {yupResolver } from '@hookform/resolvers/yup';
 import *as yup from 'yup';
 
 const schema = yup.object().shape({
-    title: yup.string().required("title is required"),
+    title: yup
+        .string()
+        .required("Title is required")
+        .matches(
+            /^[A-Za-z ]+$/,
+            "Title must contain only letters"
+        ),
 
     price: yup
         .number()
-        .required("price is required")
-        .positive("price must be positive value")
-        .typeError("price must be a number"),
+        .typeError("Price must be a number")
+        .required("Price is required")
+        .positive("Price must be a positive value"),
 
-    cateogary: yup.string().required("cateogary is required"),
+    cateogary: yup
+        .string()
+        .required("Category is required"),
 
     imageurl: yup
         .mixed()
-        .required("image is required")
-        .test("fileExist", "please upload file", (value) => {
-            return value && value.length > 0;
-        })
-        .test("fileType", "Only jpg, jpeg or png files are allowed", (value) => {
-            return (
+        .required("Image is required")
+        .test(
+            "fileExist",
+            "Please upload a file",
+            (value) => value && value.length > 0
+        )
+        .test(
+            "fileType",
+            "Only jpg, jpeg or png files are allowed",
+            (value) =>
                 value &&
                 value.length > 0 &&
-                ["image/jpeg", "image/png", "image/jpg"].includes(value[0]?.type)
-            );
-        }),
+                [
+                    "image/jpeg",
+                    "image/png",
+                    "image/jpg"
+                ].includes(value[0]?.type)
+        ),
 
     textarea: yup
         .string()
-        .required("it is required")
-        .min(10, "must be 10 letters")
+        .required("Description is required")
+        .min(
+            10,
+            "Description must be at least 10 characters"
+        )
 });
 
 const editProductSchema = yup.object().shape({
