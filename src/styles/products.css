@@ -529,10 +529,12 @@ body,
         background: transparent !important;
     }
     .card-body{
-        padding: 1px;
+        padding: 0px;
+        margin: 0px;
     }
     .card{
-        padding: 1px;
+        padding: 0px;
+        margin: 0px;
     }
 
 

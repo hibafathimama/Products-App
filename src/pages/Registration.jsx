@@ -7,13 +7,15 @@ import *as yup from 'yup';
 
 
 const registrationSchema = yup.object({
-  firstName: yup
-    .string()
-    .required("First name is required"),
+ firstName: yup
+  .string()
+  .required("First name is required")
+  .matches(/^[A-Za-z]+$/, "First name can contain only letters"),
 
-  lastName: yup
-    .string()
-    .required("Last name is required"),
+lastName: yup
+  .string()
+  .required("Last name is required")
+  .matches(/^[A-Za-z]+$/, "Last name can contain only letters"),
 
     email: yup
         .string()

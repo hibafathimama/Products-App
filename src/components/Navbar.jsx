@@ -41,15 +41,15 @@ console.log(user)
             </Link>
             </li>
           <li>
-                <button
-            className="logout"
-            onClick={() => {
-                logout();
-                navigate("/");
-            }}
-        >
-            LOGOUT
-        </button>
+               <button
+  className="logout"
+  onClick={async () => {
+    await logout();
+    navigate("/");
+  }}
+>
+  LOGOUT
+</button>
 </li>
 
          </ul>

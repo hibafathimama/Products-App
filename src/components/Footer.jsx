@@ -16,7 +16,7 @@ const viewabout=()=>{
 }
 
 const viewhome=()=>{
-    navigate("/")
+    navigate("/products")
 }
 const viewcontact=()=>{
     navigate("/contact")
